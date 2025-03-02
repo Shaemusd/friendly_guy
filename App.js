@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, AppState, Dimensions } from 'react-native';
 import { GameEngine } from 'react-native-game-engine';
 import Matter from 'matter-js';
 
-// Get screen dimensions.
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Renderer for the ball (circle).
+// Renderer for the ball.
 const Circle = ({ body, size, color }) => {
   const x = body.position.x - size[0] / 2;
   const y = body.position.y - size[1] / 2;
@@ -25,7 +24,7 @@ const Circle = ({ body, size, color }) => {
   );
 };
 
-// Renderer for the floor and walls (rectangle).
+// Renderer for the floor and walls.
 const Rectangle = ({ body, size, color }) => {
   const x = body.position.x - size[0] / 2;
   const y = body.position.y - size[1] / 2;
@@ -43,13 +42,13 @@ const Rectangle = ({ body, size, color }) => {
   );
 };
 
-// PhysicsSystem updates Matter.js engine on each frame.
+// Physics system: steps the Matter.js engine.
 const PhysicsSystem = (entities, { time }) => {
   Matter.Engine.update(entities.physics.engine, time.delta);
   return entities;
 };
 
-// TouchSystem applies a directional force based on touch position.
+// Touch system: applies force based on touch position.
 const TouchSystem = (entities, { touches }) => {
   touches.filter(t => t.type === 'press').forEach(t => {
     const ball = entities.ball;
@@ -64,14 +63,13 @@ const TouchSystem = (entities, { touches }) => {
       const dy = touchY - ballY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // If touch is within the ball, calculate a force vector.
       if (distance <= radius) {
         const forceX = ballX - touchX;
         const forceY = ballY - touchY;
         const magnitude = Math.sqrt(forceX * forceX + forceY * forceY);
         const normX = magnitude > 0 ? forceX / magnitude : 0;
         const normY = magnitude > 0 ? forceY / magnitude : 0;
-        const forceMagnitude = 0.05; // Tweak this value for sensitivity.
+        const forceMagnitude = 0.5; // Adjust as needed.
 
         Matter.Body.applyForce(
           ball.body,
@@ -87,44 +85,50 @@ const TouchSystem = (entities, { touches }) => {
 export default function App() {
   const [running, setRunning] = useState(true);
 
-  // Create a Matter.js engine and world.
+  // Pause/resume engine based on app state.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setRunning(nextAppState === 'active');
+    });
+    return () => subscription.remove();
+  }, []);
+
+  // Create Matter.js engine and world.
   const engine = Matter.Engine.create({ enableSleeping: false });
   const world = engine.world;
-  world.gravity.y = 1; // Normal gravity.
+  world.gravity.y = 0.65; // Slowed gravity 
 
-  // Create the ball.
-  const ball = Matter.Bodies.circle(200, 100, 30, {
+  // Create a bigger ball (radius 50).
+  const ball = Matter.Bodies.circle(200, 100, 50, {
     restitution: 0.8,
     label: 'ball',
   });
 
-  // Define floor position a bit above the bottom (leaving space for nav).
-  const floorY = SCREEN_HEIGHT - 80; // Adjust this value as needed.
+  // Floor positioned above the very bottom.
+  const floorY = SCREEN_HEIGHT - 80;
   const floor = Matter.Bodies.rectangle(SCREEN_WIDTH / 2, floorY, SCREEN_WIDTH, 20, {
     isStatic: true,
     label: 'floor',
   });
 
-  // Define wall thickness.
+  // Walls: left and right boundaries.
   const wallThickness = 20;
-  // Left wall: positioned so that its right edge is flush with the left side.
   const leftWall = Matter.Bodies.rectangle(-wallThickness / 2, SCREEN_HEIGHT / 2, wallThickness, SCREEN_HEIGHT, {
     isStatic: true,
     label: 'leftWall',
   });
-  // Right wall: positioned so that its left edge is flush with the right side.
   const rightWall = Matter.Bodies.rectangle(SCREEN_WIDTH + wallThickness / 2, SCREEN_HEIGHT / 2, wallThickness, SCREEN_HEIGHT, {
     isStatic: true,
     label: 'rightWall',
   });
 
-  // Add the bodies to the world.
+  // Add bodies to the world.
   Matter.World.add(world, [ball, floor, leftWall, rightWall]);
 
-  // Define the entities for GameEngine.
+  // Define entities.
   const entities = {
     physics: { engine, world },
-    ball: { body: ball, size: [60, 60], color: 'green', renderer: Circle },
+    ball: { body: ball, size: [100, 100], color: 'green', renderer: Circle },
     floor: { body: floor, size: [SCREEN_WIDTH, 20], color: 'brown', renderer: Rectangle },
     leftWall: { body: leftWall, size: [wallThickness, SCREEN_HEIGHT], color: 'grey', renderer: Rectangle },
     rightWall: { body: rightWall, size: [wallThickness, SCREEN_HEIGHT], color: 'grey', renderer: Rectangle },
