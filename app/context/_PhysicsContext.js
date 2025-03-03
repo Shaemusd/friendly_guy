@@ -25,7 +25,11 @@ export function PhysicsProvider({ children }) {
                 friction, setFriction,
                 bounciness, setBounciness,
                 physicsVersion,
-                commitPhysicsChanges
+                commitPhysicsChanges,
+                    physicsVersion,
+                // you might also export a commit function that increments it:
+                commitPhysicsChanges: () => setPhysicsVersion(prev => prev + 1),
+
             }}
         >
             {children}

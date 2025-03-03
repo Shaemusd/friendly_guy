@@ -4,6 +4,7 @@ import { View, StyleSheet, AppState, Dimensions } from 'react-native';
 import { GameEngine } from 'react-native-game-engine';
 import Matter from 'matter-js';
 import { PhysicsContext } from './context/_PhysicsContext.js'; // Import from your actual path
+import { AppearanceContext } from './context/_PhysicsContext.js'; // Import from your actual path
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -102,6 +103,9 @@ export default function BallScreen() {
         },
     };
 
+
+
+    
     // 6) Render the GameEngine as before
     return (
         <View style={styles.container}>
@@ -126,6 +130,13 @@ export default function BallScreen() {
         </View>
     );
 }
+
+
+
+
+
+
+
 
 // The same Circle, Rectangle, PhysicsSystem, TouchSystem
 function Circle({ body, size, color }) {
