@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-community/slider": "^4.5.6",
     "expo": "~52.0.37",
     "expo-router": "^4.0.17",
     "expo-status-bar": "~2.0.1",
